@@ -29,9 +29,9 @@ public class Sudoku {
 			}
 		if (hm.isEmpty()) exit("No valid game.", 0);
     }
-	public static synchronized void complete(String key, boolean done, int[][] n) {
+	public static synchronized void complete(String key, int[][] n) {
 		if (!hm.containsKey(key)) return;
-		if (done) {
+		if (done(n)) {
 			if (!save(op + "\\" + key + ".answer", n)) logln("Failed to save file for " + key);
 			for (int i = 0; i < 9; i++) {
 				for (int j = 0; j < 9; j++)
@@ -43,6 +43,12 @@ public class Sudoku {
 		if (hm.isEmpty())
 			exit("Total: " + (System.currentTimeMillis() - ms) + "ms", 0);
 	}
+	public static boolean done(int[][] n) {
+		for (int i = 0; i < 9; i++)
+			for (int j = 0; j < 9; j++)
+				if (n[i][j] < 1 || n[i][j] > 9) return false;
+    	return true;
+    }
 	public static int base(int i) {
 		return i - i % 3;
 	}
@@ -151,6 +157,10 @@ class Game implements Runnable {
     public void run() {
     	prepare();
     	foreplay();
+    	if (Sudoku.done(nodes)) {
+    		Sudoku.complete(title, nodes);
+    		return;
+    	}
         for (int i = 0; i < 2; i++)
         	new Thread(new Hardcore(this, i > 0)).start();
     }
@@ -188,7 +198,7 @@ class Game implements Runnable {
 				}
 			}
 			for (v = 1; v < 10; v++)
-				if (mapping(v) > 3)
+				if (mapping(v) > 5)
 					for (x = 0; x < 3; x++) {
 						if (map2go(x, false)) c += reduce();
 						if (map2go(x, true)) c += reduce();
@@ -463,7 +473,7 @@ class Hardcore implements Runnable {
 			if (w[l][0] > 0)
 				if (!mark(l))
 					l = back(l);
-    	Sudoku.complete(oya.key(), done(), m);
+    	Sudoku.complete(oya.key(), m);
 	}
     private boolean mark(int l) {
     	int v, i = reverse? -1 : 1;
@@ -486,12 +496,6 @@ class Hardcore implements Runnable {
     	for (int i = l-2; i > -2; i--)
     		if (w[i+1][0] > 0) return i;
     	return Sudoku.NA;
-    }
-    private boolean done() {
-		for (int i = 0; i < 9; i++)
-			for (int j = 0; j < 9; j++)
-				if (m[i][j] < 1 || m[i][j] > 9) return false;
-    	return true;
     }
     private Game oya;
 	private boolean reverse;
